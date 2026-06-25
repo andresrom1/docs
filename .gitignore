@@ -1,1 +1,9 @@
-/app
+# Entornos y artefactos de Python
+venv/
+__pycache__/
+*.pyc
+
+# Estado y salidas en runtime del ingestor (se generan al correr)
+app/v5/state.json
+app/v5/logs/
+app/v5/_out.txt

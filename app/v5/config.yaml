@@ -1,0 +1,149 @@
+# Configuración del Ingestor Local v3
+# Calibrado contra PDFs reales de 7 aseguradoras argentinas
+
+watch:
+  folder: "~/Downloads"   # carpeta Descargas del equipo
+  recursive: false        # solo la raíz de Descargas, no subcarpetas
+  pattern: "*.pdf"
+
+endpoint:
+  url: "https://tu-dominio.com/api/ingesta-local"
+  token: "${SANCTUM_TOKEN}"
+  timeout: 60
+  max_retries: 3
+
+parser:
+  # ============================================================
+  # SANCOR - Texto libre, campos en líneas tipo "Campo: valor"
+  # ============================================================
+  - name: "Sancor Seguros"
+    aliases: ["Sancor", "Sancor Seguros Coop", "Sancor Cooperativa de Seguros"]
+    anchors:
+      policy_number: ["Póliza N°", "Póliza Nº", "PÓLIZA N°", "Póliza N"]
+      holder_name: ["Asegurado:", "TOMADOR", "Contratante"]
+      holder_doc: ["DNI:", "CUIT", "Documento"]
+      vehicle_plate: ["Dominio:", "Patente:", "DOMINIO"]
+      vehicle_brand: ["Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["Documento generado el día", "Emisión", "Fecha de emisión"]
+      expiry_date: ["Hasta las 12 hs", "Vigencia hasta", "Vencimiento"]
+    date_format: "%d/%m/%Y"
+    # Sancor pone vigencia desde/hasta en la misma línea: "19/02/2026 19/02/2027"
+    # El parser extrae la segunda como vigencia_hasta
+
+  # ============================================================
+  # SAN CRISTÓBAL - Tabla densa, campos en posiciones fijas
+  # ============================================================
+  - name: "San Cristóbal"
+    aliases: ["San Cristobal", "SAN CRISTOBAL S.M.S.G.", "sancristobal.com.ar"]
+    anchors:
+      policy_number: ["01-03-01-", "N° PÓLIZA", "Nro. Póliza"]
+      holder_name: ["TOMADOR", "Tomador"]
+      holder_doc: ["D.N.I.", "DNI", "CUIT"]
+      vehicle_plate: ["DOMINIO", "Dominio", "Patente"]
+      vehicle_brand: ["MARCA Y MODELO", "Marca"]
+      vehicle_model: ["MODELO", "Modelo"]
+      emission_date: ["FECHA EMISIÓN", "Emisión", "LUGAR Y FECHA"]
+      expiry_date: ["VIGENCIA HASTA", "Prorrogable hasta"]
+    date_format: "%d/%m/%Y"
+    # San Cristóbal usa estrategia _extract_sancristobal (hardcoded en parser)
+
+  # ============================================================
+  # RÍO URUGUAY - Formato mixto, campos en líneas
+  # ============================================================
+  - name: "Río Uruguay"
+    aliases: ["Rio Uruguay", "RÍO URUGUAY COOPERATIVA", "riouruguay.com.ar"]
+    anchors:
+      policy_number: ["Póliza:", "PÓLIZA", "N° Póliza"]
+      holder_name: ["Asegurado:", "TOMADOR", "Contratante"]
+      holder_doc: ["DNI/CUIL:", "DNI", "CUIT", "CUIL"]
+      vehicle_plate: ["Patente:", "Dominio:", "PATENTE"]
+      vehicle_brand: ["Marca y modelo:", "Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["Fecha:", "Emisión:", "Lugar de Emisión"]
+      expiry_date: ["Hasta:", "Vigencia hasta", "Vencimiento"]
+    date_format: "%d/%m/%Y"
+    # Río Uruguay pone "Desde: 04/05/2026" y "Hasta: 04/11/2026" en líneas separadas
+
+  # ============================================================
+  # GALICIA - Texto libre, formato simple
+  # ============================================================
+  - name: "Seguros Galicia"
+    aliases: ["Galicia", "SEGUROS GALICIA S.A.", "galiciaseguros.com.ar"]
+    anchors:
+      policy_number: ["Póliza :", "Póliza:", "PÓLIZA", "N° Póliza"]
+      holder_name: ["Asegurado :", "Asegurado:", "TOMADOR"]
+      holder_doc: ["DNI:", "CUIT", "Documento"]
+      vehicle_plate: ["Dominio:", "Patente:", "DOMINIO"]
+      vehicle_brand: ["Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["Fecha de Emisión:", "Emisión:", "Fecha:"]
+      expiry_date: ["Vigencia hasta:", "Vencimiento:", "Hasta:"]
+    date_format: "%d/%m/%Y"
+
+  # ============================================================
+  # MERCANTIL ANDINA - Texto libre, campos sueltos
+  # ============================================================
+  - name: "Mercantil Andina"
+    aliases: ["Mercantil Andina", "mercantilandina.com.ar", "MERCANTIL ANDINA"]
+    anchors:
+      policy_number: ["POLIZA NUEVA", "Póliza", "N° Póliza", "Referencia"]
+      holder_name: ["IVA:", "Consumidor Final", "Asegurado"]
+      holder_doc: ["DNI:", "CUIT", "Documento"]
+      vehicle_plate: ["Dominio:", "Patente:", "DOMINIO"]
+      vehicle_brand: ["Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["Fecha:", "Emisión", "Documento generado"]
+      expiry_date: ["Vigencia hasta", "Vencimiento", "Hasta"]
+    date_format: "%d/%m/%Y"
+    # Mercantil Andina pone fechas en formato "27.05.2026 27.06.2026" (punto como separador)
+    # El parser normaliza automáticamente
+
+  # ============================================================
+  # TRIUNFO - Texto libre con formato particular
+  # ============================================================
+  - name: "Triunfo Cooperativa de Seguros"
+    aliases: ["Triunfo", "TRIUNFO COOP.", "Triunfo Seguros"]
+    anchors:
+      policy_number: ["Número:", "Contrato anterior:", "Póliza"]
+      holder_name: ["Nombre y Apellido:", "Asegurado:", "TOMADOR"]
+      holder_doc: ["Doc.:", "DNI", "CUIT", "CUIL"]
+      vehicle_plate: ["Patente:", "Dominio:", "PATENTE"]
+      vehicle_brand: ["Marca y Modelo:", "Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["Emisión:", "Fecha de emisión", "Fecha:"]
+      expiry_date: ["hasta las 12 hs. del", "Vigencia hasta", "Vencimiento"]
+    date_format: "%d-%m-%Y"
+    # Triunfo usa formato "28 -05 -2026" (guiones con espacios)
+    # El parser limpia espacios antes de parsear
+
+  # ============================================================
+  # EXPERTA - Tabla mal formada, necesita layout=True
+  # ============================================================
+  - name: "Experta Seguros"
+    aliases: ["Experta", "EXPERTA SEGUROS S.A.U.", "Experta Seguros"]
+    anchors:
+      policy_number: ["SOLICITUD Nº", "Nº DOC.", "Póliza"]
+      holder_name: ["ASEGURADO", "Tomador", "Contratante"]
+      holder_doc: ["N° DE CUIT", "CUIT", "DNI", "Documento"]
+      vehicle_plate: ["Dominio:", "Patente:", "DOMINIO"]
+      vehicle_brand: ["Marca:", "MARCA"]
+      vehicle_model: ["Modelo:", "MODELO"]
+      emission_date: ["VIGENCIA", "Emisión:", "Fecha:"]
+      expiry_date: ["Vencimiento:", "Vigencia hasta", "Hasta:"]
+    date_format: "%d/%m/%Y"
+    # Experta usa estrategia _extract_experta (hardcoded en parser)
+    # Necesita pdfplumber con layout=True
+
+output:
+  state_file: "state.json"
+  log_folder: "logs"
+  log_level: "INFO"
+
+rules:
+  # Solo procesar PDFs creados hace esta cantidad de días o menos (≈ 3 meses).
+  max_age_days: 90
+  # Cuánto retener el registro de procesados/descartados en state.json.
+  # Debe ser > max_age_days para que un archivo dentro de la ventana no se
+  # re-parsee tras vencer su registro.
+  keep_processed_for_days: 120
